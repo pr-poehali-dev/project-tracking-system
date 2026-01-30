@@ -26,6 +26,13 @@ interface Expense {
   date: string;
 }
 
+interface Income {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+}
+
 interface ProjectAssignment {
   contractorId: string;
   hours: number;
@@ -40,6 +47,7 @@ interface Project {
   status: 'active' | 'completed' | 'paused';
   assignments: ProjectAssignment[];
   expenses: Expense[];
+  incomes: Income[];
   createdAt: string;
 }
 
@@ -59,6 +67,9 @@ const Index = () => {
         { id: 'e1', description: 'Хостинг на год', amount: 12000, category: 'Инфраструктура', date: '2024-01-15' },
         { id: 'e2', description: 'Лицензия на плагины', amount: 8000, category: 'ПО', date: '2024-01-20' },
       ],
+      incomes: [
+        { id: 'i1', description: 'Аванс 50%', amount: 250000, date: '2024-01-10' },
+      ],
       createdAt: '2024-01-10',
     },
     {
@@ -73,6 +84,9 @@ const Index = () => {
       ],
       expenses: [
         { id: 'e3', description: 'Покупка премиум-темы', amount: 15000, category: 'Дизайн', date: '2024-02-01' },
+      ],
+      incomes: [
+        { id: 'i2', description: 'Аванс 30%', amount: 90000, date: '2024-02-01' },
       ],
       createdAt: '2024-02-01',
     },
@@ -92,8 +106,10 @@ const Index = () => {
   const [editForm, setEditForm] = useState({ name: '', client: '', budget: 0, status: 'active' as Project['status'] });
   const [isAddProjectContractorOpen, setIsAddProjectContractorOpen] = useState(false);
   const [isAddProjectExpenseOpen, setIsAddProjectExpenseOpen] = useState(false);
+  const [isAddProjectIncomeOpen, setIsAddProjectIncomeOpen] = useState(false);
   const [newContractorForm, setNewContractorForm] = useState({ name: '', role: '', amount: 0 });
   const [newExpenseForm, setNewExpenseForm] = useState({ description: '', amount: 0, category: '', date: new Date().toISOString().split('T')[0] });
+  const [newIncomeForm, setNewIncomeForm] = useState({ description: '', amount: 0, date: new Date().toISOString().split('T')[0] });
 
   const getContractorById = (id: string) => contractors.find(c => c.id === id);
 
@@ -103,12 +119,13 @@ const Index = () => {
     }, 0);
 
     const expensesCost = project.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalIncome = project.incomes.reduce((sum, income) => sum + income.amount, 0);
 
     const totalCost = contractorsCost + expensesCost;
-    const profit = project.budget - totalCost;
-    const profitMargin = project.budget > 0 ? ((profit / project.budget) * 100).toFixed(1) : '0';
+    const profit = totalIncome - totalCost;
+    const profitMargin = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : '0';
 
-    return { contractorsCost, expensesCost, totalCost, profit, profitMargin };
+    return { contractorsCost, expensesCost, totalCost, totalIncome, profit, profitMargin };
   };
 
   const getTotalStats = () => {
@@ -297,10 +314,14 @@ const Index = () => {
                 </DialogHeader>
                 {editingProject && (
                   <div className="space-y-6 py-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-secondary/50 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-secondary/50 rounded-lg">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Бюджет</p>
                         <p className="text-2xl font-bold font-mono">{editForm.budget.toLocaleString()} ₽</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Получено</p>
+                        <p className="text-2xl font-bold font-mono text-blue-500">{calculateProjectCosts(editingProject).totalIncome.toLocaleString()} ₽</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Расходы</p>
@@ -315,8 +336,9 @@ const Index = () => {
                     </div>
 
                     <Tabs defaultValue="info" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3">
+                      <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="info">Основное</TabsTrigger>
+                        <TabsTrigger value="incomes">Доходы</TabsTrigger>
                         <TabsTrigger value="contractors">Исполнители</TabsTrigger>
                         <TabsTrigger value="expenses">Расходы</TabsTrigger>
                       </TabsList>
@@ -375,6 +397,125 @@ const Index = () => {
                               Завершен
                             </Button>
                           </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="incomes" className="space-y-4 mt-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-semibold">Доходы проекта</h3>
+                          <Dialog open={isAddProjectIncomeOpen} onOpenChange={setIsAddProjectIncomeOpen}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" className="gap-2">
+                                <Icon name="Plus" size={16} />
+                                Добавить приход
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Добавить приход</DialogTitle>
+                                <DialogDescription>Укажите информацию о поступлении средств</DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="income-desc">Описание</Label>
+                                  <Input 
+                                    id="income-desc"
+                                    placeholder="Оплата от клиента, Аванс 50%..."
+                                    value={newIncomeForm.description}
+                                    onChange={(e) => setNewIncomeForm({ ...newIncomeForm, description: e.target.value })}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="income-amt">Сумма (₽)</Label>
+                                  <Input 
+                                    id="income-amt"
+                                    type="number"
+                                    placeholder="100000"
+                                    value={newIncomeForm.amount || ''}
+                                    onChange={(e) => setNewIncomeForm({ ...newIncomeForm, amount: Number(e.target.value) })}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="income-date">Дата</Label>
+                                  <Input 
+                                    id="income-date"
+                                    type="date"
+                                    value={newIncomeForm.date}
+                                    onChange={(e) => setNewIncomeForm({ ...newIncomeForm, date: e.target.value })}
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    className="flex-1"
+                                    onClick={() => {
+                                      setIsAddProjectIncomeOpen(false);
+                                      setNewIncomeForm({ description: '', amount: 0, date: new Date().toISOString().split('T')[0] });
+                                    }}
+                                  >
+                                    Отмена
+                                  </Button>
+                                  <Button 
+                                    className="flex-1"
+                                    onClick={() => {
+                                      if (newIncomeForm.description && newIncomeForm.amount > 0 && editingProject) {
+                                        const newIncome: Income = {
+                                          id: Date.now().toString(),
+                                          description: newIncomeForm.description,
+                                          amount: newIncomeForm.amount,
+                                          date: newIncomeForm.date
+                                        };
+                                        setProjects(projects.map(p => 
+                                          p.id === editingProject.id 
+                                            ? { ...p, incomes: [...p.incomes, newIncome] }
+                                            : p
+                                        ));
+                                        setEditingProject({ ...editingProject, incomes: [...editingProject.incomes, newIncome] });
+                                        toast.success('Приход добавлен');
+                                        setIsAddProjectIncomeOpen(false);
+                                        setNewIncomeForm({ description: '', amount: 0, date: new Date().toISOString().split('T')[0] });
+                                      } else {
+                                        toast.error('Заполните все поля');
+                                      }
+                                    }}
+                                  >
+                                    Добавить
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                        <div className="space-y-2">
+                          {editingProject.incomes.map((income, idx) => (
+                            <div key={income.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                              <div className="flex-1">
+                                <p className="font-medium">{income.description}</p>
+                                <span className="text-xs text-muted-foreground">{new Date(income.date).toLocaleDateString('ru-RU')}</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <p className="font-bold font-mono text-green-500">+{income.amount.toLocaleString()} ₽</p>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => {
+                                    setProjects(projects.map(p => 
+                                      p.id === editingProject.id 
+                                        ? { ...p, incomes: p.incomes.filter((_, i) => i !== idx) }
+                                        : p
+                                    ));
+                                    setEditingProject({ ...editingProject, incomes: editingProject.incomes.filter((_, i) => i !== idx) });
+                                    toast.success('Приход удалён');
+                                  }}
+                                >
+                                  <Icon name="Trash2" size={16} />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          {editingProject.incomes.length === 0 && (
+                            <p className="text-center text-muted-foreground py-4">Нет доходов</p>
+                          )}
                         </div>
                       </TabsContent>
 
