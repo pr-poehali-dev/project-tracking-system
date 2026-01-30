@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система учета проектов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f0f0f;
+            color: #e4e4e7;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #a1a1aa;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #27272a;
+            color: #e4e4e7;
+        }
+
+        .btn-outline:hover {
+            background: #18181b;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #e4e4e7;
+        }
+
+        .btn-ghost:hover {
+            background: #27272a;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .stat-label {
+            color: #a1a1aa;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.875rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .stat-icon {
+            font-size: 1.25rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: #a1a1aa;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #e4e4e7;
+        }
+
+        .tab-btn.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid;
+        }
+
+        .badge-active {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        .badge-paused {
+            background: rgba(234, 179, 8, 0.1);
+            color: #eab308;
+            border-color: rgba(234, 179, 8, 0.2);
+        }
+
+        .badge-completed {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .text-green {
+            color: #22c55e;
+        }
+
+        .text-red {
+            color: #ef4444;
+        }
+
+        .text-blue {
+            color: #3b82f6;
+        }
+
+        .text-muted {
+            color: #a1a1aa;
+        }
+
+        .dialog-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialog-overlay.active {
+            display: flex;
+        }
+
+        .dialog {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .dialog-large {
+            max-width: 900px;
+        }
+
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .dialog-body {
+            padding: 1.5rem;
+        }
+
+        .dialog-footer {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1.5rem;
+            border-top: 1px solid #27272a;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #a1a1aa;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+        }
+
+        .close-btn:hover {
+            background: #27272a;
+            color: #e4e4e7;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: 0.375rem;
+            color: #e4e4e7;
+            font-size: 0.875rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .metrics-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(39, 39, 42, 0.5);
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #a1a1aa;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .project-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .project-tab-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: #a1a1aa;
+            cursor: pointer;
+            font-size: 0.875rem;
+            border-bottom: 2px solid transparent;
+        }
+
+        .project-tab-btn.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .project-tab-content {
+            display: none;
+        }
+
+        .project-tab-content.active {
+            display: block;
+        }
+
+        .tab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(39, 39, 42, 0.5);
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-subtitle {
+            font-size: 0.875rem;
+            color: #a1a1aa;
+        }
+
+        .item-amount {
+            font-weight: 700;
+            font-family: monospace;
+            margin-right: 1rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transform: translateY(200%);
+            transition: transform 0.3s;
+            z-index: 200;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .project-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-info {
+            flex: 1;
+        }
+
+        .project-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-client {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #a1a1aa;
+        }
+
+        .contractor-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .contractor-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .contractor-info {
+            flex: 1;
+        }
+
+        .contractor-stats {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item-label {
+            font-size: 0.75rem;
+            color: #a1a1aa;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-item-value {
+            font-weight: 700;
+            font-family: monospace;
+            font-size: 1.125rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #a1a1aa;
+        }
+
+        .finance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .finance-section h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .analytics-card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .analytics-card h3 {
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: #27272a;
+            border-radius: 0.25rem;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            transition: width 0.5s;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .contractor-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .finance-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div>
+                <h1>Система учета проектов</h1>
+                <p class="subtitle">Управление разработкой, исполнителями и финансами</p>
+            </div>
+            <button class="btn btn-primary" onclick="app.openAddProjectDialog()">
+                <span>➕</span>
+                Новый проект
+            </button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Всего проектов</div>
+                <div class="stat-value">
+                    <span class="stat-icon">📁</span>
+                    <span id="total-projects">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Общий бюджет</div>
+                <div class="stat-value">
+                    <span class="stat-icon">💰</span>
+                    <span id="total-budget">0k ₽</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Расходы</div>
+                <div class="stat-value">
+                    <span class="stat-icon text-red">📉</span>
+                    <span id="total-costs">0k ₽</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Чистая прибыль</div>
+                <div class="stat-value">
+                    <span class="stat-icon text-green">📈</span>
+                    <span id="total-profit" class="text-green">0k ₽</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="app.switchTab('projects')">Проекты</button>
+            <button class="tab-btn" onclick="app.switchTab('contractors')">Исполнители</button>
+            <button class="tab-btn" onclick="app.switchTab('finances')">Финансы</button>
+            <button class="tab-btn" onclick="app.switchTab('analytics')">Аналитика</button>
+        </div>
+
+        <div id="projects-tab" class="tab-content active">
+            <div id="projects-list"></div>
+        </div>
+
+        <div id="contractors-tab" class="tab-content">
+            <div class="tab-header">
+                <h2>Исполнители</h2>
+                <button class="btn btn-primary" onclick="app.openAddContractorDialog()">
+                    <span>👤</span>
+                    Добавить исполнителя
+                </button>
+            </div>
+            <div id="contractors-list"></div>
+        </div>
+
+        <div id="finances-tab" class="tab-content">
+            <div class="tab-header">
+                <h2>Финансы</h2>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Общий доход</div>
+                    <div class="stat-value text-green">
+                        <span>📈</span>
+                        <span id="finance-income">0k ₽</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Общий расход</div>
+                    <div class="stat-value text-red">
+                        <span>📉</span>
+                        <span id="finance-expense">0k ₽</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Баланс</div>
+                    <div class="stat-value text-blue">
+                        <span>💰</span>
+                        <span id="finance-balance">0k ₽</span>
+                    </div>
+                </div>
+            </div>
+            <div class="finance-grid">
+                <div class="finance-section">
+                    <h3 class="text-green">📈 Доходы</h3>
+                    <div id="incomes-list"></div>
+                </div>
+                <div class="finance-section">
+                    <h3 class="text-red">📉 Расходы</h3>
+                    <div id="expenses-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="analytics-tab" class="tab-content">
+            <div class="analytics-card">
+                <h3>Топ исполнителей по доходу</h3>
+                <p class="text-muted" style="margin-bottom: 1rem;">Рейтинг исполнителей по общему заработку за все проекты</p>
+                <div id="analytics-contractors"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Диалог добавления проекта -->
+    <div id="add-project-dialog" class="dialog-overlay" onclick="app.closeDialog('add-project-dialog')">
+        <div class="dialog" onclick="event.stopPropagation()">
+            <div class="dialog-header">
+                <h2>Добавить новый проект</h2>
+                <button class="close-btn" onclick="app.closeDialog('add-project-dialog')">✕</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>Название проекта</label>
+                    <input type="text" id="project-name" placeholder="Интернет-магазин одежды">
+                </div>
+                <div class="form-group">
+                    <label>Заказчик</label>
+                    <input type="text" id="project-client" placeholder="ООО 'Компания'">
+                </div>
+                <div class="form-group">
+                    <label>Бюджет (₽)</label>
+                    <input type="number" id="project-budget" placeholder="500000">
+                </div>
+                <button class="btn btn-primary w-full" onclick="app.addProject()">Создать проект</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Диалог редактирования проекта -->
+    <div id="edit-project-dialog" class="dialog-overlay" onclick="app.closeDialog('edit-project-dialog')">
+        <div class="dialog dialog-large" onclick="event.stopPropagation()">
+            <div class="dialog-header">
+                <h2>Управление проектом</h2>
+                <button class="close-btn" onclick="app.closeDialog('edit-project-dialog')">✕</button>
+            </div>
+            <div class="dialog-body">
+                <div class="metrics-panel" id="project-metrics"></div>
+                
+                <div class="project-tabs">
+                    <button class="project-tab-btn active" onclick="app.switchProjectTab('info')">Основное</button>
+                    <button class="project-tab-btn" onclick="app.switchProjectTab('incomes')">Доходы</button>
+                    <button class="project-tab-btn" onclick="app.switchProjectTab('project-contractors')">Исполнители</button>
+                    <button class="project-tab-btn" onclick="app.switchProjectTab('project-expenses')">Расходы</button>
+                </div>
+
+                <div id="project-info-tab" class="project-tab-content active">
+                    <div class="form-group">
+                        <label>Название проекта</label>
+                        <input type="text" id="edit-project-name">
+                    </div>
+                    <div class="form-group">
+                        <label>Заказчик</label>
+                        <input type="text" id="edit-project-client">
+                    </div>
+                    <div class="form-group">
+                        <label>Бюджет (₽)</label>
+                        <input type="number" id="edit-project-budget">
+                    </div>
+                    <div class="form-group">
+                        <label>Статус</label>
+                        <div class="btn-group">
+                            <button class="btn btn-outline" id="status-active" onclick="app.setProjectStatus('active')">Активен</button>
+                            <button class="btn btn-outline" id="status-paused" onclick="app.setProjectStatus('paused')">На паузе</button>
+                            <button class="btn btn-outline" id="status-completed" onclick="app.setProjectStatus('completed')">Завершен</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="project-incomes-tab" class="project-tab-content">
+                    <div class="tab-header">
+                        <h3>Доходы проекта</h3>
+                        <button class="btn btn-sm btn-primary" onclick="app.addProjectIncome()">
+                            ➕ Добавить приход
+                        </button>
+                    </div>
+                    <div id="project-incomes-list"></div>
+                </div>
+
+                <div id="project-contractors-tab" class="project-tab-content">
+                    <div class="tab-header">
+                        <h3>Исполнители проекта</h3>
+                        <button class="btn btn-sm btn-primary" onclick="app.addProjectContractor()">
+                            ➕ Добавить исполнителя
+                        </button>
+                    </div>
+                    <div id="project-contractors-list"></div>
+                </div>
+
+                <div id="project-expenses-tab" class="project-tab-content">
+                    <div class="tab-header">
+                        <h3>Прочие расходы</h3>
+                        <button class="btn btn-sm btn-primary" onclick="app.addProjectExpense()">
+                            ➕ Добавить расход
+                        </button>
+                    </div>
+                    <div id="project-expenses-list"></div>
+                </div>
+
+                <div class="dialog-footer">
+                    <button class="btn btn-outline" onclick="app.closeDialog('edit-project-dialog')">Закрыть</button>
+                    <button class="btn btn-primary" onclick="app.saveProject()">Сохранить изменения</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Тост уведомления -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const app = {
+            projects: [
+                {
+                    id: '1',
+                    name: 'Интернет-магазин электроники',
+                    client: 'ООО "ТехноМир"',
+                    budget: 500000,
+                    status: 'active',
+                    assignments: [
+                        { contractorId: '1', hours: 80, totalAmount: 200000 },
+                        { contractorId: '2', hours: 40, totalAmount: 80000 }
+                    ],
+                    expenses: [
+                        { id: 'e1', description: 'Хостинг на год', amount: 12000, category: 'Инфраструктура', date: '2024-01-15' },
+                        { id: 'e2', description: 'Лицензия на плагины', amount: 8000, category: 'ПО', date: '2024-01-20' }
+                    ],
+                    incomes: [
+                        { id: 'i1', description: 'Аванс 50%', amount: 250000, date: '2024-01-10' }
+                    ],
+                    createdAt: '2024-01-10'
+                },
+                {
+                    id: '2',
+                    name: 'Корпоративный сайт юридической компании',
+                    client: 'АО "ПравоКонсалт"',
+                    budget: 300000,
+                    status: 'active',
+                    assignments: [
+                        { contractorId: '1', hours: 60, totalAmount: 150000 },
+                        { contractorId: '3', hours: 30, totalAmount: 90000 }
+                    ],
+                    expenses: [
+                        { id: 'e3', description: 'Покупка премиум-темы', amount: 15000, category: 'Дизайн', date: '2024-02-01' }
+                    ],
+                    incomes: [
+                        { id: 'i2', description: 'Аванс 30%', amount: 90000, date: '2024-02-01' }
+                    ],
+                    createdAt: '2024-02-01'
+                }
+            ],
+
+            contractors: [
+                { id: '1', name: 'Алексей Петров', role: 'Frontend Developer', rate: 2500 },
+                { id: '2', name: 'Мария Сидорова', role: 'UI/UX Designer', rate: 2000 },
+                { id: '3', name: 'Дмитрий Иванов', role: 'Backend Developer', rate: 3000 }
+            ],
+
+            currentProject: null,
+            currentProjectStatus: 'active',
+
+            init() {
+                this.render();
+            },
+
+            render() {
+                this.renderStats();
+                this.renderProjects();
+                this.renderContractors();
+                this.renderFinances();
+                this.renderAnalytics();
+            },
+
+            renderStats() {
+                const totalBudget = this.projects.reduce((sum, p) => sum + p.budget, 0);
+                const totalCosts = this.projects.reduce((sum, p) => sum + this.calculateProjectCosts(p).totalCost, 0);
+                const totalProfit = totalBudget - totalCosts;
+
+                document.getElementById('total-projects').textContent = this.projects.length;
+                document.getElementById('total-budget').textContent = (totalBudget / 1000).toFixed(0) + 'k ₽';
+                document.getElementById('total-costs').textContent = (totalCosts / 1000).toFixed(0) + 'k ₽';
+                document.getElementById('total-profit').textContent = (totalProfit / 1000).toFixed(0) + 'k ₽';
+            },
+
+            renderProjects() {
+                const list = document.getElementById('projects-list');
+                if (this.projects.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Нет проектов</div>';
+                    return;
+                }
+
+                list.innerHTML = this.projects.map(project => `
+                    <div class="card">
+                        <div class="project-card">
+                            <div class="project-info">
+                                <div class="project-title">
+                                    <h3>${project.name}</h3>
+                                    <span class="badge badge-${project.status}">
+                                        ${this.getStatusLabel(project.status)}
+                                    </span>
+                                </div>
+                                <div class="project-client">
+                                    <span>🏢</span>
+                                    <span>${project.client}</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="app.openEditProject('${project.id}')">
+                                ✏️ Редактировать
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            renderContractors() {
+                const list = document.getElementById('contractors-list');
+                if (this.contractors.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Нет исполнителей</div>';
+                    return;
+                }
+
+                list.innerHTML = this.contractors.map(contractor => {
+                    const totalEarned = this.projects.reduce((sum, project) => {
+                        const assignment = project.assignments.find(a => a.contractorId === contractor.id);
+                        return sum + (assignment ? assignment.totalAmount : 0);
+                    }, 0);
+                    const totalProjects = this.projects.filter(p => p.assignments.some(a => a.contractorId === contractor.id)).length;
+                    const activeProjects = this.projects.filter(p => p.status === 'active' && p.assignments.some(a => a.contractorId === contractor.id)).length;
+                    const debt = totalEarned;
+
+                    return `
+                        <div class="card">
+                            <div class="contractor-row">
+                                <div class="contractor-avatar">👤</div>
+                                <div class="contractor-info">
+                                    <div class="item-title">${contractor.name}</div>
+                                    <div class="item-subtitle">${contractor.role}</div>
+                                </div>
+                                <div class="contractor-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-item-label">Всего проектов</div>
+                                        <div class="stat-item-value">${totalProjects}</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-item-label">Активных</div>
+                                        <div class="stat-item-value text-green">${activeProjects}</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-item-label">Заработал</div>
+                                        <div class="stat-item-value">${totalEarned.toLocaleString()} ₽</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-item-label">Долг</div>
+                                        <div class="stat-item-value ${debt > 0 ? 'text-red' : 'text-green'}">
+                                            ${debt > 0 ? debt.toLocaleString() : '0'} ₽
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderFinances() {
+                const totalIncome = this.projects.reduce((sum, p) => sum + p.budget, 0);
+                const totalExpense = this.projects.reduce((sum, p) => sum + this.calculateProjectCosts(p).totalCost, 0);
+                const balance = totalIncome - totalExpense;
+
+                document.getElementById('finance-income').textContent = (totalIncome / 1000).toFixed(0) + 'k ₽';
+                document.getElementById('finance-expense').textContent = (totalExpense / 1000).toFixed(0) + 'k ₽';
+                document.getElementById('finance-balance').textContent = (balance / 1000).toFixed(0) + 'k ₽';
+
+                const incomesList = document.getElementById('incomes-list');
+                incomesList.innerHTML = this.projects.map(project => `
+                    <div class="item-row">
+                        <div class="item-info">
+                            <div class="item-title">${project.name}</div>
+                            <div class="item-subtitle">${project.client}</div>
+                        </div>
+                        <div class="item-amount text-green">+${project.budget.toLocaleString()} ₽</div>
+                    </div>
+                `).join('');
+
+                const expensesList = document.getElementById('expenses-list');
+                const allExpenses = this.projects.flatMap(project => 
+                    project.expenses.map(expense => ({ ...expense, projectName: project.name }))
+                );
+                const contractorExpenses = this.contractors.map(contractor => {
+                    const totalEarned = this.projects.reduce((sum, project) => {
+                        const assignment = project.assignments.find(a => a.contractorId === contractor.id);
+                        return sum + (assignment ? assignment.totalAmount : 0);
+                    }, 0);
+                    return { contractor, totalEarned };
+                }).filter(item => item.totalEarned > 0);
+
+                expensesList.innerHTML = [
+                    ...allExpenses.map(expense => `
+                        <div class="item-row">
+                            <div class="item-info">
+                                <div class="item-title">${expense.description}</div>
+                                <div class="item-subtitle">
+                                    <span class="badge badge-active">${expense.category}</span>
+                                    <span style="margin-left: 0.5rem;">${expense.projectName}</span>
+                                </div>
+                            </div>
+                            <div class="item-amount text-red">-${expense.amount.toLocaleString()} ₽</div>
+                        </div>
+                    `),
+                    ...contractorExpenses.map(({ contractor, totalEarned }) => `
+                        <div class="item-row">
+                            <div class="item-info">
+                                <div class="item-title">${contractor.name}</div>
+                                <div class="item-subtitle">${contractor.role}</div>
+                            </div>
+                            <div class="item-amount text-red">-${totalEarned.toLocaleString()} ₽</div>
+                        </div>
+                    `)
+                ].join('');
+            },
+
+            renderAnalytics() {
+                const contractorEarnings = this.contractors.map(contractor => {
+                    const earnings = this.projects.reduce((sum, project) => {
+                        const assignment = project.assignments.find(a => a.contractorId === contractor.id);
+                        return sum + (assignment ? assignment.totalAmount : 0);
+                    }, 0);
+                    return { ...contractor, earnings };
+                }).sort((a, b) => b.earnings - a.earnings);
+
+                const totalCosts = this.projects.reduce((sum, p) => sum + this.calculateProjectCosts(p).totalCost, 0);
+
+                const list = document.getElementById('analytics-contractors');
+                list.innerHTML = contractorEarnings.map((contractor, idx) => {
+                    const percentage = totalCosts > 0 ? (contractor.earnings / totalCosts * 100) : 0;
+                    return `
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="width: 2rem; height: 2rem; border-radius: 50%; background: rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                                        ${idx + 1}
+                                    </div>
+                                    <div>
+                                        <div class="item-title">${contractor.name}</div>
+                                        <div class="item-subtitle">${contractor.role}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 700; font-family: monospace; font-size: 1.125rem;">
+                                        ${contractor.earnings.toLocaleString()} ₽
+                                    </div>
+                                    <div class="item-subtitle">${percentage.toFixed(1)}% от расходов</div>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            calculateProjectCosts(project) {
+                const contractorsCost = project.assignments.reduce((sum, assignment) => sum + assignment.totalAmount, 0);
+                const expensesCost = project.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+                const totalIncome = project.incomes.reduce((sum, income) => sum + income.amount, 0);
+                const totalCost = contractorsCost + expensesCost;
+                const profit = totalIncome - totalCost;
+                const profitMargin = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : '0';
+                return { contractorsCost, expensesCost, totalCost, totalIncome, profit, profitMargin };
+            },
+
+            getStatusLabel(status) {
+                const labels = {
+                    'active': 'Активен',
+                    'paused': 'На паузе',
+                    'completed': 'Завершен'
+                };
+                return labels[status] || status;
+            },
+
+            switchTab(tabName) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                event.target.classList.add('active');
+                document.getElementById(tabName + '-tab').classList.add('active');
+            },
+
+            switchProjectTab(tabName) {
+                document.querySelectorAll('.project-tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.project-tab-content').forEach(content => content.classList.remove('active'));
+                
+                event.target.classList.add('active');
+                document.getElementById('project-' + tabName + '-tab').classList.add('active');
+            },
+
+            openDialog(id) {
+                document.getElementById(id).classList.add('active');
+            },
+
+            closeDialog(id) {
+                document.getElementById(id).classList.remove('active');
+            },
+
+            showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = 'toast show ' + type;
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            },
+
+            openAddProjectDialog() {
+                this.openDialog('add-project-dialog');
+            },
+
+            addProject() {
+                const name = document.getElementById('project-name').value;
+                const client = document.getElementById('project-client').value;
+                const budget = parseInt(document.getElementById('project-budget').value);
+
+                if (!name || !client || !budget) {
+                    this.showToast('Заполните все поля', 'error');
+                    return;
+                }
+
+                const newProject = {
+                    id: Date.now().toString(),
+                    name,
+                    client,
+                    budget,
+                    status: 'active',
+                    assignments: [],
+                    expenses: [],
+                    incomes: [],
+                    createdAt: new Date().toISOString()
+                };
+
+                this.projects.push(newProject);
+                this.closeDialog('add-project-dialog');
+                this.showToast('Проект добавлен');
+                this.render();
+
+                document.getElementById('project-name').value = '';
+                document.getElementById('project-client').value = '';
+                document.getElementById('project-budget').value = '';
+            },
+
+            openEditProject(projectId) {
+                this.currentProject = this.projects.find(p => p.id === projectId);
+                if (!this.currentProject) return;
+
+                this.currentProjectStatus = this.currentProject.status;
+
+                document.getElementById('edit-project-name').value = this.currentProject.name;
+                document.getElementById('edit-project-client').value = this.currentProject.client;
+                document.getElementById('edit-project-budget').value = this.currentProject.budget;
+
+                this.updateProjectStatusButtons();
+                this.renderProjectMetrics();
+                this.renderProjectTabs();
+
+                this.openDialog('edit-project-dialog');
+            },
+
+            updateProjectStatusButtons() {
+                ['active', 'paused', 'completed'].forEach(status => {
+                    const btn = document.getElementById('status-' + status);
+                    if (status === this.currentProjectStatus) {
+                        btn.classList.remove('btn-outline');
+                        btn.classList.add('btn-primary');
+                    } else {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline');
+                    }
+                });
+            },
+
+            setProjectStatus(status) {
+                this.currentProjectStatus = status;
+                this.updateProjectStatusButtons();
+            },
+
+            renderProjectMetrics() {
+                if (!this.currentProject) return;
+                
+                const costs = this.calculateProjectCosts(this.currentProject);
+                const metrics = document.getElementById('project-metrics');
+                
+                metrics.innerHTML = `
+                    <div class="metric">
+                        <div class="metric-label">Бюджет</div>
+                        <div class="metric-value">${this.currentProject.budget.toLocaleString()} ₽</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Получено</div>
+                        <div class="metric-value text-blue">${costs.totalIncome.toLocaleString()} ₽</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Расходы</div>
+                        <div class="metric-value text-red">${costs.totalCost.toLocaleString()} ₽</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Прибыль</div>
+                        <div class="metric-value ${costs.profit >= 0 ? 'text-green' : 'text-red'}">
+                            ${costs.profit >= 0 ? '+' : ''}${costs.profit.toLocaleString()} ₽
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderProjectTabs() {
+                this.renderProjectIncomes();
+                this.renderProjectContractors();
+                this.renderProjectExpenses();
+            },
+
+            renderProjectIncomes() {
+                const list = document.getElementById('project-incomes-list');
+                if (!this.currentProject || this.currentProject.incomes.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Нет доходов</div>';
+                    return;
+                }
+
+                list.innerHTML = this.currentProject.incomes.map((income, idx) => `
+                    <div class="item-row">
+                        <div class="item-info">
+                            <div class="item-title">${income.description}</div>
+                            <div class="item-subtitle">${new Date(income.date).toLocaleDateString('ru-RU')}</div>
+                        </div>
+                        <div class="item-amount text-green">+${income.amount.toLocaleString()} ₽</div>
+                        <button class="btn btn-ghost btn-sm" onclick="app.deleteProjectIncome(${idx})">🗑️</button>
+                    </div>
+                `).join('');
+            },
+
+            renderProjectContractors() {
+                const list = document.getElementById('project-contractors-list');
+                if (!this.currentProject || this.currentProject.assignments.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Нет исполнителей</div>';
+                    return;
+                }
+
+                list.innerHTML = this.currentProject.assignments.map((assignment, idx) => {
+                    const contractor = this.contractors.find(c => c.id === assignment.contractorId);
+                    if (!contractor) return '';
+                    
+                    return `
+                        <div class="item-row">
+                            <div class="item-info">
+                                <div class="item-title">${contractor.name}</div>
+                                <div class="item-subtitle">${contractor.role}</div>
+                            </div>
+                            <div class="item-amount">${assignment.totalAmount.toLocaleString()} ₽</div>
+                            <button class="btn btn-ghost btn-sm" onclick="app.deleteProjectContractor(${idx})">🗑️</button>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderProjectExpenses() {
+                const list = document.getElementById('project-expenses-list');
+                if (!this.currentProject || this.currentProject.expenses.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Нет расходов</div>';
+                    return;
+                }
+
+                list.innerHTML = this.currentProject.expenses.map((expense, idx) => `
+                    <div class="item-row">
+                        <div class="item-info">
+                            <div class="item-title">${expense.description}</div>
+                            <div class="item-subtitle">
+                                <span class="badge badge-active">${expense.category}</span>
+                                <span style="margin-left: 0.5rem;">${new Date(expense.date).toLocaleDateString('ru-RU')}</span>
+                            </div>
+                        </div>
+                        <div class="item-amount">${expense.amount.toLocaleString()} ₽</div>
+                        <button class="btn btn-ghost btn-sm" onclick="app.deleteProjectExpense(${idx})">🗑️</button>
+                    </div>
+                `).join('');
+            },
+
+            addProjectIncome() {
+                const description = prompt('Описание прихода:');
+                if (!description) return;
+                
+                const amount = parseInt(prompt('Сумма (₽):'));
+                if (!amount || amount <= 0) {
+                    this.showToast('Укажите корректную сумму', 'error');
+                    return;
+                }
+
+                const newIncome = {
+                    id: Date.now().toString(),
+                    description,
+                    amount,
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                this.currentProject.incomes.push(newIncome);
+                this.showToast('Приход добавлен');
+                this.renderProjectMetrics();
+                this.renderProjectIncomes();
+            },
+
+            deleteProjectIncome(idx) {
+                this.currentProject.incomes.splice(idx, 1);
+                this.showToast('Приход удалён');
+                this.renderProjectMetrics();
+                this.renderProjectIncomes();
+            },
+
+            addProjectContractor() {
+                const name = prompt('Имя исполнителя:');
+                if (!name) return;
+
+                const role = prompt('Должность:');
+                if (!role) return;
+
+                const amount = parseInt(prompt('Сумма за проект (₽):'));
+                if (!amount || amount <= 0) {
+                    this.showToast('Укажите корректную сумму', 'error');
+                    return;
+                }
+
+                const newContractor = {
+                    id: Date.now().toString(),
+                    name,
+                    role,
+                    rate: 0
+                };
+
+                this.contractors.push(newContractor);
+                this.currentProject.assignments.push({
+                    contractorId: newContractor.id,
+                    hours: 0,
+                    totalAmount: amount
+                });
+
+                this.showToast('Исполнитель добавлен');
+                this.renderProjectMetrics();
+                this.renderProjectContractors();
+                this.renderContractors();
+            },
+
+            deleteProjectContractor(idx) {
+                this.currentProject.assignments.splice(idx, 1);
+                this.showToast('Исполнитель удалён');
+                this.renderProjectMetrics();
+                this.renderProjectContractors();
+            },
+
+            addProjectExpense() {
+                const description = prompt('Описание расхода:');
+                if (!description) return;
+
+                const amount = parseInt(prompt('Сумма (₽):'));
+                if (!amount || amount <= 0) {
+                    this.showToast('Укажите корректную сумму', 'error');
+                    return;
+                }
+
+                const category = prompt('Категория:');
+                if (!category) return;
+
+                const newExpense = {
+                    id: Date.now().toString(),
+                    description,
+                    amount,
+                    category,
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                this.currentProject.expenses.push(newExpense);
+                this.showToast('Расход добавлен');
+                this.renderProjectMetrics();
+                this.renderProjectExpenses();
+            },
+
+            deleteProjectExpense(idx) {
+                this.currentProject.expenses.splice(idx, 1);
+                this.showToast('Расход удалён');
+                this.renderProjectMetrics();
+                this.renderProjectExpenses();
+            },
+
+            saveProject() {
+                const name = document.getElementById('edit-project-name').value;
+                const client = document.getElementById('edit-project-client').value;
+                const budget = parseInt(document.getElementById('edit-project-budget').value);
+
+                if (!name || !client || !budget) {
+                    this.showToast('Заполните все поля', 'error');
+                    return;
+                }
+
+                this.currentProject.name = name;
+                this.currentProject.client = client;
+                this.currentProject.budget = budget;
+                this.currentProject.status = this.currentProjectStatus;
+
+                this.closeDialog('edit-project-dialog');
+                this.showToast('Проект сохранён');
+                this.render();
+            },
+
+            openAddContractorDialog() {
+                const name = prompt('ФИО:');
+                if (!name) return;
+
+                const role = prompt('Должность:');
+                if (!role) return;
+
+                const rate = parseInt(prompt('Ставка за час (₽):'));
+                if (!rate || rate <= 0) {
+                    this.showToast('Укажите корректную ставку', 'error');
+                    return;
+                }
+
+                const newContractor = {
+                    id: Date.now().toString(),
+                    name,
+                    role,
+                    rate
+                };
+
+                this.contractors.push(newContractor);
+                this.showToast('Исполнитель добавлен');
+                this.renderContractors();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
