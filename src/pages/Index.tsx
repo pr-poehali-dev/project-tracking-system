@@ -87,6 +87,8 @@ const Index = () => {
   const [isAddContractorOpen, setIsAddContractorOpen] = useState(false);
   const [isAddIncomeOpen, setIsAddIncomeOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', client: '', budget: 0, status: 'active' as Project['status'] });
 
   const getContractorById = (id: string) => contractors.find(c => c.id === id);
 
@@ -253,14 +255,27 @@ const Index = () => {
                 <Card key={project.id} className="animate-fade-in" style={{ animationDelay: `${idx * 0.1}s` }}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-xl">{project.name}</CardTitle>
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-xl">{project.name}</CardTitle>
+                          <Badge variant="outline" className={getStatusColor(project.status)}>
+                            {getStatusLabel(project.status)}
+                          </Badge>
+                        </div>
                         <CardDescription className="flex items-center gap-2">
                           <Icon name="Building" size={14} />
                           {project.client}
                         </CardDescription>
                       </div>
-                      <Button variant="outline" size="sm" className="gap-2">
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                        setEditingProject(project);
+                        setEditForm({
+                          name: project.name,
+                          client: project.client,
+                          budget: project.budget,
+                          status: project.status
+                        });
+                      }}>
                         <Icon name="Edit" size={14} />
                         Редактировать
                       </Button>
@@ -269,6 +284,96 @@ const Index = () => {
                 </Card>
               );
             })}
+
+            <Dialog open={editingProject !== null} onOpenChange={(open) => !open && setEditingProject(null)}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Редактировать проект</DialogTitle>
+                  <DialogDescription>Измените информацию о проекте</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-project-name">Название проекта</Label>
+                    <Input 
+                      id="edit-project-name" 
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-client">Заказчик</Label>
+                    <Input 
+                      id="edit-client" 
+                      value={editForm.client}
+                      onChange={(e) => setEditForm({ ...editForm, client: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-budget">Бюджет (₽)</Label>
+                    <Input 
+                      id="edit-budget" 
+                      type="number" 
+                      value={editForm.budget}
+                      onChange={(e) => setEditForm({ ...editForm, budget: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-status">Статус</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button"
+                        variant={editForm.status === 'active' ? 'default' : 'outline'}
+                        onClick={() => setEditForm({ ...editForm, status: 'active' })}
+                        className="flex-1"
+                      >
+                        Активен
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant={editForm.status === 'paused' ? 'default' : 'outline'}
+                        onClick={() => setEditForm({ ...editForm, status: 'paused' })}
+                        className="flex-1"
+                      >
+                        На паузе
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant={editForm.status === 'completed' ? 'default' : 'outline'}
+                        onClick={() => setEditForm({ ...editForm, status: 'completed' })}
+                        className="flex-1"
+                      >
+                        Завершен
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => setEditingProject(null)}
+                    >
+                      Отмена
+                    </Button>
+                    <Button 
+                      className="flex-1"
+                      onClick={() => {
+                        if (editingProject) {
+                          setProjects(projects.map(p => 
+                            p.id === editingProject.id 
+                              ? { ...p, name: editForm.name, client: editForm.client, budget: editForm.budget, status: editForm.status }
+                              : p
+                          ));
+                          toast.success('Проект обновлен');
+                          setEditingProject(null);
+                        }
+                      }}
+                    >
+                      Сохранить изменения
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="contractors" className="space-y-4 mt-6">
