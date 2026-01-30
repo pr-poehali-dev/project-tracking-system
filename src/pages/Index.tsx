@@ -90,6 +90,10 @@ const Index = () => {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editForm, setEditForm] = useState({ name: '', client: '', budget: 0, status: 'active' as Project['status'] });
+  const [isAddProjectContractorOpen, setIsAddProjectContractorOpen] = useState(false);
+  const [isAddProjectExpenseOpen, setIsAddProjectExpenseOpen] = useState(false);
+  const [newContractorForm, setNewContractorForm] = useState({ name: '', role: '', amount: 0 });
+  const [newExpenseForm, setNewExpenseForm] = useState({ description: '', amount: 0, category: '', date: new Date().toISOString().split('T')[0] });
 
   const getContractorById = (id: string) => contractors.find(c => c.id === id);
 
@@ -377,29 +381,89 @@ const Index = () => {
                       <TabsContent value="contractors" className="space-y-4 mt-4">
                         <div className="flex justify-between items-center">
                           <h3 className="font-semibold">Исполнители проекта</h3>
-                          <Button size="sm" className="gap-2" onClick={() => {
-                            const contractorName = prompt('Имя исполнителя:');
-                            const amount = prompt('Сумма за проект (₽):');
-                            if (contractorName && amount) {
-                              const newContractor: Contractor = {
-                                id: Date.now().toString(),
-                                name: contractorName,
-                                role: 'Исполнитель',
-                                rate: 0
-                              };
-                              setContractors([...contractors, newContractor]);
-                              setProjects(projects.map(p => 
-                                p.id === editingProject.id 
-                                  ? { ...p, assignments: [...p.assignments, { contractorId: newContractor.id, hours: 0, totalAmount: Number(amount) }] }
-                                  : p
-                              ));
-                              setEditingProject({ ...editingProject, assignments: [...editingProject.assignments, { contractorId: newContractor.id, hours: 0, totalAmount: Number(amount) }] });
-                              toast.success('Исполнитель добавлен');
-                            }
-                          }}>
-                            <Icon name="Plus" size={16} />
-                            Добавить исполнителя
-                          </Button>
+                          <Dialog open={isAddProjectContractorOpen} onOpenChange={setIsAddProjectContractorOpen}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" className="gap-2">
+                                <Icon name="Plus" size={16} />
+                                Добавить исполнителя
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Добавить исполнителя</DialogTitle>
+                                <DialogDescription>Укажите данные исполнителя и сумму за проект</DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="contractor-name">Имя исполнителя</Label>
+                                  <Input 
+                                    id="contractor-name"
+                                    placeholder="Иван Иванов"
+                                    value={newContractorForm.name}
+                                    onChange={(e) => setNewContractorForm({ ...newContractorForm, name: e.target.value })}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="contractor-role">Должность</Label>
+                                  <Input 
+                                    id="contractor-role"
+                                    placeholder="Frontend Developer"
+                                    value={newContractorForm.role}
+                                    onChange={(e) => setNewContractorForm({ ...newContractorForm, role: e.target.value })}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="contractor-amount">Сумма за проект (₽)</Label>
+                                  <Input 
+                                    id="contractor-amount"
+                                    type="number"
+                                    placeholder="150000"
+                                    value={newContractorForm.amount || ''}
+                                    onChange={(e) => setNewContractorForm({ ...newContractorForm, amount: Number(e.target.value) })}
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    className="flex-1"
+                                    onClick={() => {
+                                      setIsAddProjectContractorOpen(false);
+                                      setNewContractorForm({ name: '', role: '', amount: 0 });
+                                    }}
+                                  >
+                                    Отмена
+                                  </Button>
+                                  <Button 
+                                    className="flex-1"
+                                    onClick={() => {
+                                      if (newContractorForm.name && newContractorForm.amount > 0 && editingProject) {
+                                        const newContractor: Contractor = {
+                                          id: Date.now().toString(),
+                                          name: newContractorForm.name,
+                                          role: newContractorForm.role || 'Исполнитель',
+                                          rate: 0
+                                        };
+                                        setContractors([...contractors, newContractor]);
+                                        setProjects(projects.map(p => 
+                                          p.id === editingProject.id 
+                                            ? { ...p, assignments: [...p.assignments, { contractorId: newContractor.id, hours: 0, totalAmount: newContractorForm.amount }] }
+                                            : p
+                                        ));
+                                        setEditingProject({ ...editingProject, assignments: [...editingProject.assignments, { contractorId: newContractor.id, hours: 0, totalAmount: newContractorForm.amount }] });
+                                        toast.success('Исполнитель добавлен');
+                                        setIsAddProjectContractorOpen(false);
+                                        setNewContractorForm({ name: '', role: '', amount: 0 });
+                                      } else {
+                                        toast.error('Заполните все поля');
+                                      }
+                                    }}
+                                  >
+                                    Добавить
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                         <div className="space-y-2">
                           {editingProject.assignments.map((assignment, idx) => {
@@ -441,30 +505,98 @@ const Index = () => {
                       <TabsContent value="expenses" className="space-y-4 mt-4">
                         <div className="flex justify-between items-center">
                           <h3 className="font-semibold">Прочие расходы</h3>
-                          <Button size="sm" className="gap-2" onClick={() => {
-                            const description = prompt('Описание расхода:');
-                            const amount = prompt('Сумма (₽):');
-                            const category = prompt('Категория:');
-                            if (description && amount && category) {
-                              const newExpense: Expense = {
-                                id: Date.now().toString(),
-                                description,
-                                amount: Number(amount),
-                                category,
-                                date: new Date().toISOString().split('T')[0]
-                              };
-                              setProjects(projects.map(p => 
-                                p.id === editingProject.id 
-                                  ? { ...p, expenses: [...p.expenses, newExpense] }
-                                  : p
-                              ));
-                              setEditingProject({ ...editingProject, expenses: [...editingProject.expenses, newExpense] });
-                              toast.success('Расход добавлен');
-                            }
-                          }}>
-                            <Icon name="Plus" size={16} />
-                            Добавить расход
-                          </Button>
+                          <Dialog open={isAddProjectExpenseOpen} onOpenChange={setIsAddProjectExpenseOpen}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" className="gap-2">
+                                <Icon name="Plus" size={16} />
+                                Добавить расход
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Добавить расход</DialogTitle>
+                                <DialogDescription>Укажите информацию о расходе</DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="expense-desc">Описание</Label>
+                                  <Input 
+                                    id="expense-desc"
+                                    placeholder="Хостинг на год"
+                                    value={newExpenseForm.description}
+                                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, description: e.target.value })}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="expense-amt">Сумма (₽)</Label>
+                                  <Input 
+                                    id="expense-amt"
+                                    type="number"
+                                    placeholder="15000"
+                                    value={newExpenseForm.amount || ''}
+                                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, amount: Number(e.target.value) })}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="expense-cat">Категория</Label>
+                                  <Input 
+                                    id="expense-cat"
+                                    placeholder="Инфраструктура, ПО, Дизайн..."
+                                    value={newExpenseForm.category}
+                                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, category: e.target.value })}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="expense-date">Дата</Label>
+                                  <Input 
+                                    id="expense-date"
+                                    type="date"
+                                    value={newExpenseForm.date}
+                                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, date: e.target.value })}
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    className="flex-1"
+                                    onClick={() => {
+                                      setIsAddProjectExpenseOpen(false);
+                                      setNewExpenseForm({ description: '', amount: 0, category: '', date: new Date().toISOString().split('T')[0] });
+                                    }}
+                                  >
+                                    Отмена
+                                  </Button>
+                                  <Button 
+                                    className="flex-1"
+                                    onClick={() => {
+                                      if (newExpenseForm.description && newExpenseForm.amount > 0 && newExpenseForm.category && editingProject) {
+                                        const newExpense: Expense = {
+                                          id: Date.now().toString(),
+                                          description: newExpenseForm.description,
+                                          amount: newExpenseForm.amount,
+                                          category: newExpenseForm.category,
+                                          date: newExpenseForm.date
+                                        };
+                                        setProjects(projects.map(p => 
+                                          p.id === editingProject.id 
+                                            ? { ...p, expenses: [...p.expenses, newExpense] }
+                                            : p
+                                        ));
+                                        setEditingProject({ ...editingProject, expenses: [...editingProject.expenses, newExpense] });
+                                        toast.success('Расход добавлен');
+                                        setIsAddProjectExpenseOpen(false);
+                                        setNewExpenseForm({ description: '', amount: 0, category: '', date: new Date().toISOString().split('T')[0] });
+                                      } else {
+                                        toast.error('Заполните все поля');
+                                      }
+                                    }}
+                                  >
+                                    Добавить
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                         <div className="space-y-2">
                           {editingProject.expenses.map((expense, idx) => (
