@@ -85,6 +85,8 @@ const Index = () => {
 
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
   const [isAddContractorOpen, setIsAddContractorOpen] = useState(false);
+  const [isAddIncomeOpen, setIsAddIncomeOpen] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
 
   const getContractorById = (id: string) => contractors.find(c => c.id === id);
 
@@ -364,7 +366,7 @@ const Index = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Финансы</h2>
               <div className="flex gap-2">
-                <Dialog>
+                <Dialog open={isAddIncomeOpen} onOpenChange={setIsAddIncomeOpen}>
                   <DialogTrigger asChild>
                     <Button className="gap-2">
                       <Icon name="TrendingUp" size={16} />
@@ -391,26 +393,18 @@ const Index = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="income-project">Проект</Label>
-                        <Select>
-                          <SelectTrigger id="income-project">
-                            <SelectValue placeholder="Выберите проект" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {projects.map(project => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Input id="income-project" placeholder="Название проекта" />
                       </div>
-                      <Button className="w-full" onClick={() => toast.success('Доход добавлен')}>
+                      <Button className="w-full" onClick={() => {
+                        toast.success('Доход добавлен');
+                        setIsAddIncomeOpen(false);
+                      }}>
                         Добавить доход
                       </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Dialog>
+                <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="gap-2">
                       <Icon name="TrendingDown" size={16} />
@@ -433,18 +427,7 @@ const Index = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="expense-category">Категория</Label>
-                        <Select>
-                          <SelectTrigger id="expense-category">
-                            <SelectValue placeholder="Выберите категорию" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="infrastructure">Инфраструктура</SelectItem>
-                            <SelectItem value="software">ПО</SelectItem>
-                            <SelectItem value="design">Дизайн</SelectItem>
-                            <SelectItem value="marketing">Маркетинг</SelectItem>
-                            <SelectItem value="other">Прочее</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input id="expense-category" placeholder="Инфраструктура, ПО, Дизайн..." />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="expense-date">Дата</Label>
@@ -452,20 +435,12 @@ const Index = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="expense-project">Проект (опционально)</Label>
-                        <Select>
-                          <SelectTrigger id="expense-project">
-                            <SelectValue placeholder="Выберите проект" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {projects.map(project => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Input id="expense-project" placeholder="Название проекта" />
                       </div>
-                      <Button className="w-full" onClick={() => toast.success('Расход добавлен')}>
+                      <Button className="w-full" onClick={() => {
+                        toast.success('Расход добавлен');
+                        setIsAddExpenseOpen(false);
+                      }}>
                         Добавить расход
                       </Button>
                     </div>
