@@ -843,53 +843,51 @@ const Index = () => {
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
               {contractors.map((contractor, idx) => {
                 const totalEarned = projects.reduce((sum, project) => {
                   const assignment = project.assignments.find(a => a.contractorId === contractor.id);
-                  return sum + (assignment ? contractor.rate * assignment.hours : 0);
+                  return sum + (assignment ? assignment.totalAmount : 0);
                 }, 0);
-                const totalHours = projects.reduce((sum, project) => {
-                  const assignment = project.assignments.find(a => a.contractorId === contractor.id);
-                  return sum + (assignment ? assignment.hours : 0);
-                }, 0);
-                const projectCount = projects.filter(p => p.assignments.some(a => a.contractorId === contractor.id)).length;
+                const totalPaid = 0;
+                const debt = totalEarned - totalPaid;
+                const totalProjects = projects.filter(p => p.assignments.some(a => a.contractorId === contractor.id)).length;
+                const activeProjects = projects.filter(p => p.status === 'active' && p.assignments.some(a => a.contractorId === contractor.id)).length;
 
                 return (
-                  <Card key={contractor.id} className="animate-fade-in" style={{ animationDelay: `${idx * 0.1}s` }}>
-                    <CardHeader>
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Icon name="User" size={24} className="text-primary" />
+                  <Card key={contractor.id} className="animate-fade-in p-4" style={{ animationDelay: `${idx * 0.1}s` }}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                          <Icon name="User" size={20} className="text-primary" />
                         </div>
-                        <div>
-                          <CardTitle className="text-lg">{contractor.name}</CardTitle>
-                          <CardDescription>{contractor.role}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Ставка</span>
-                          <span className="font-bold font-mono">{contractor.rate} ₽/ч</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Проектов</span>
-                          <span className="font-bold font-mono">{projectCount}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Часов</span>
-                          <span className="font-bold font-mono">{totalHours}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-base">{contractor.name}</p>
+                          <p className="text-sm text-muted-foreground">{contractor.role}</p>
                         </div>
                       </div>
-                      <div className="pt-4 border-t border-border">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">Заработано</span>
-                          <span className="text-xl font-bold font-mono text-green-500">{totalEarned.toLocaleString()} ₽</span>
+
+                      <div className="flex items-center gap-6">
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground mb-1">Всего проектов</p>
+                          <p className="font-bold font-mono text-lg">{totalProjects}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground mb-1">Активных</p>
+                          <p className="font-bold font-mono text-lg text-green-500">{activeProjects}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground mb-1">Заработал</p>
+                          <p className="font-bold font-mono text-lg">{totalEarned.toLocaleString()} ₽</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground mb-1">Долг</p>
+                          <p className={`font-bold font-mono text-lg ${debt > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                            {debt > 0 ? debt.toLocaleString() : '0'} ₽
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 );
               })}
