@@ -29,6 +29,7 @@ interface Expense {
 interface ProjectAssignment {
   contractorId: string;
   hours: number;
+  totalAmount: number;
 }
 
 interface Project {
@@ -51,8 +52,8 @@ const Index = () => {
       budget: 500000,
       status: 'active',
       assignments: [
-        { contractorId: '1', hours: 80 },
-        { contractorId: '2', hours: 40 },
+        { contractorId: '1', hours: 80, totalAmount: 200000 },
+        { contractorId: '2', hours: 40, totalAmount: 80000 },
       ],
       expenses: [
         { id: 'e1', description: 'Хостинг на год', amount: 12000, category: 'Инфраструктура', date: '2024-01-15' },
@@ -67,8 +68,8 @@ const Index = () => {
       budget: 300000,
       status: 'active',
       assignments: [
-        { contractorId: '1', hours: 60 },
-        { contractorId: '3', hours: 30 },
+        { contractorId: '1', hours: 60, totalAmount: 150000 },
+        { contractorId: '3', hours: 30, totalAmount: 90000 },
       ],
       expenses: [
         { id: 'e3', description: 'Покупка премиум-темы', amount: 15000, category: 'Дизайн', date: '2024-02-01' },
@@ -94,8 +95,7 @@ const Index = () => {
 
   const calculateProjectCosts = (project: Project) => {
     const contractorsCost = project.assignments.reduce((sum, assignment) => {
-      const contractor = getContractorById(assignment.contractorId);
-      return sum + (contractor ? contractor.rate * assignment.hours : 0);
+      return sum + assignment.totalAmount;
     }, 0);
 
     const expensesCost = project.expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -286,92 +286,248 @@ const Index = () => {
             })}
 
             <Dialog open={editingProject !== null} onOpenChange={(open) => !open && setEditingProject(null)}>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Редактировать проект</DialogTitle>
-                  <DialogDescription>Измените информацию о проекте</DialogDescription>
+                  <DialogTitle>Управление проектом</DialogTitle>
+                  <DialogDescription>Редактируйте проект, добавляйте исполнителей и расходы</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-project-name">Название проекта</Label>
-                    <Input 
-                      id="edit-project-name" 
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-client">Заказчик</Label>
-                    <Input 
-                      id="edit-client" 
-                      value={editForm.client}
-                      onChange={(e) => setEditForm({ ...editForm, client: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-budget">Бюджет (₽)</Label>
-                    <Input 
-                      id="edit-budget" 
-                      type="number" 
-                      value={editForm.budget}
-                      onChange={(e) => setEditForm({ ...editForm, budget: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-status">Статус</Label>
-                    <div className="flex gap-2">
-                      <Button 
-                        type="button"
-                        variant={editForm.status === 'active' ? 'default' : 'outline'}
-                        onClick={() => setEditForm({ ...editForm, status: 'active' })}
-                        className="flex-1"
-                      >
-                        Активен
-                      </Button>
-                      <Button 
-                        type="button"
-                        variant={editForm.status === 'paused' ? 'default' : 'outline'}
-                        onClick={() => setEditForm({ ...editForm, status: 'paused' })}
-                        className="flex-1"
-                      >
-                        На паузе
-                      </Button>
-                      <Button 
-                        type="button"
-                        variant={editForm.status === 'completed' ? 'default' : 'outline'}
-                        onClick={() => setEditForm({ ...editForm, status: 'completed' })}
-                        className="flex-1"
-                      >
-                        Завершен
-                      </Button>
+                {editingProject && (
+                  <div className="space-y-6 py-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-secondary/50 rounded-lg">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Бюджет</p>
+                        <p className="text-2xl font-bold font-mono">{editForm.budget.toLocaleString()} ₽</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Расходы</p>
+                        <p className="text-2xl font-bold font-mono text-red-500">{calculateProjectCosts(editingProject).totalCost.toLocaleString()} ₽</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Прибыль</p>
+                        <p className={`text-2xl font-bold font-mono ${calculateProjectCosts(editingProject).profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {calculateProjectCosts(editingProject).profit >= 0 ? '+' : ''}{calculateProjectCosts(editingProject).profit.toLocaleString()} ₽
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => setEditingProject(null)}
-                    >
-                      Отмена
-                    </Button>
-                    <Button 
-                      className="flex-1"
-                      onClick={() => {
-                        if (editingProject) {
+
+                    <Tabs defaultValue="info" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="info">Основное</TabsTrigger>
+                        <TabsTrigger value="contractors">Исполнители</TabsTrigger>
+                        <TabsTrigger value="expenses">Расходы</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="info" className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-project-name">Название проекта</Label>
+                          <Input 
+                            id="edit-project-name" 
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-client">Заказчик</Label>
+                          <Input 
+                            id="edit-client" 
+                            value={editForm.client}
+                            onChange={(e) => setEditForm({ ...editForm, client: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-budget">Бюджет (₽)</Label>
+                          <Input 
+                            id="edit-budget" 
+                            type="number" 
+                            value={editForm.budget}
+                            onChange={(e) => setEditForm({ ...editForm, budget: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-status">Статус</Label>
+                          <div className="flex gap-2">
+                            <Button 
+                              type="button"
+                              variant={editForm.status === 'active' ? 'default' : 'outline'}
+                              onClick={() => setEditForm({ ...editForm, status: 'active' })}
+                              className="flex-1"
+                            >
+                              Активен
+                            </Button>
+                            <Button 
+                              type="button"
+                              variant={editForm.status === 'paused' ? 'default' : 'outline'}
+                              onClick={() => setEditForm({ ...editForm, status: 'paused' })}
+                              className="flex-1"
+                            >
+                              На паузе
+                            </Button>
+                            <Button 
+                              type="button"
+                              variant={editForm.status === 'completed' ? 'default' : 'outline'}
+                              onClick={() => setEditForm({ ...editForm, status: 'completed' })}
+                              className="flex-1"
+                            >
+                              Завершен
+                            </Button>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="contractors" className="space-y-4 mt-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-semibold">Исполнители проекта</h3>
+                          <Button size="sm" className="gap-2" onClick={() => {
+                            const contractorName = prompt('Имя исполнителя:');
+                            const amount = prompt('Сумма за проект (₽):');
+                            if (contractorName && amount) {
+                              const newContractor: Contractor = {
+                                id: Date.now().toString(),
+                                name: contractorName,
+                                role: 'Исполнитель',
+                                rate: 0
+                              };
+                              setContractors([...contractors, newContractor]);
+                              setProjects(projects.map(p => 
+                                p.id === editingProject.id 
+                                  ? { ...p, assignments: [...p.assignments, { contractorId: newContractor.id, hours: 0, totalAmount: Number(amount) }] }
+                                  : p
+                              ));
+                              setEditingProject({ ...editingProject, assignments: [...editingProject.assignments, { contractorId: newContractor.id, hours: 0, totalAmount: Number(amount) }] });
+                              toast.success('Исполнитель добавлен');
+                            }
+                          }}>
+                            <Icon name="Plus" size={16} />
+                            Добавить исполнителя
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          {editingProject.assignments.map((assignment, idx) => {
+                            const contractor = getContractorById(assignment.contractorId);
+                            if (!contractor) return null;
+                            return (
+                              <div key={idx} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                                <div>
+                                  <p className="font-medium">{contractor.name}</p>
+                                  <p className="text-sm text-muted-foreground">{contractor.role}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <p className="font-bold font-mono">{assignment.totalAmount.toLocaleString()} ₽</p>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    onClick={() => {
+                                      setProjects(projects.map(p => 
+                                        p.id === editingProject.id 
+                                          ? { ...p, assignments: p.assignments.filter((_, i) => i !== idx) }
+                                          : p
+                                      ));
+                                      setEditingProject({ ...editingProject, assignments: editingProject.assignments.filter((_, i) => i !== idx) });
+                                      toast.success('Исполнитель удалён');
+                                    }}
+                                  >
+                                    <Icon name="Trash2" size={16} />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {editingProject.assignments.length === 0 && (
+                            <p className="text-center text-muted-foreground py-4">Нет исполнителей</p>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="expenses" className="space-y-4 mt-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-semibold">Прочие расходы</h3>
+                          <Button size="sm" className="gap-2" onClick={() => {
+                            const description = prompt('Описание расхода:');
+                            const amount = prompt('Сумма (₽):');
+                            const category = prompt('Категория:');
+                            if (description && amount && category) {
+                              const newExpense: Expense = {
+                                id: Date.now().toString(),
+                                description,
+                                amount: Number(amount),
+                                category,
+                                date: new Date().toISOString().split('T')[0]
+                              };
+                              setProjects(projects.map(p => 
+                                p.id === editingProject.id 
+                                  ? { ...p, expenses: [...p.expenses, newExpense] }
+                                  : p
+                              ));
+                              setEditingProject({ ...editingProject, expenses: [...editingProject.expenses, newExpense] });
+                              toast.success('Расход добавлен');
+                            }
+                          }}>
+                            <Icon name="Plus" size={16} />
+                            Добавить расход
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          {editingProject.expenses.map((expense, idx) => (
+                            <div key={expense.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                              <div className="flex-1">
+                                <p className="font-medium">{expense.description}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge variant="outline" className="text-xs">{expense.category}</Badge>
+                                  <span className="text-xs text-muted-foreground">{new Date(expense.date).toLocaleDateString('ru-RU')}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <p className="font-bold font-mono">{expense.amount.toLocaleString()} ₽</p>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => {
+                                    setProjects(projects.map(p => 
+                                      p.id === editingProject.id 
+                                        ? { ...p, expenses: p.expenses.filter((_, i) => i !== idx) }
+                                        : p
+                                    ));
+                                    setEditingProject({ ...editingProject, expenses: editingProject.expenses.filter((_, i) => i !== idx) });
+                                    toast.success('Расход удалён');
+                                  }}
+                                >
+                                  <Icon name="Trash2" size={16} />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          {editingProject.expenses.length === 0 && (
+                            <p className="text-center text-muted-foreground py-4">Нет расходов</p>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
+                    <div className="flex gap-2 pt-4 border-t">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setEditingProject(null)}
+                      >
+                        Закрыть
+                      </Button>
+                      <Button 
+                        className="flex-1"
+                        onClick={() => {
                           setProjects(projects.map(p => 
                             p.id === editingProject.id 
                               ? { ...p, name: editForm.name, client: editForm.client, budget: editForm.budget, status: editForm.status }
                               : p
                           ));
-                          toast.success('Проект обновлен');
+                          toast.success('Проект сохранён');
                           setEditingProject(null);
-                        }
-                      }}
-                    >
-                      Сохранить изменения
-                    </Button>
+                        }}
+                      >
+                        Сохранить изменения
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </DialogContent>
             </Dialog>
           </TabsContent>
