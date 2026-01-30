@@ -238,122 +238,32 @@ const Index = () => {
         </div>
 
         <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="projects">Проекты</TabsTrigger>
             <TabsTrigger value="contractors">Исполнители</TabsTrigger>
+            <TabsTrigger value="finances">Финансы</TabsTrigger>
             <TabsTrigger value="analytics">Аналитика</TabsTrigger>
           </TabsList>
 
           <TabsContent value="projects" className="space-y-4 mt-6">
             {projects.map((project, idx) => {
-              const costs = calculateProjectCosts(project);
               return (
-                <Card key={project.id} className="animate-fade-in hover-scale" style={{ animationDelay: `${idx * 0.1}s` }}>
+                <Card key={project.id} className="animate-fade-in" style={{ animationDelay: `${idx * 0.1}s` }}>
                   <CardHeader>
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <CardTitle className="text-2xl">{project.name}</CardTitle>
+                        <CardTitle className="text-xl">{project.name}</CardTitle>
                         <CardDescription className="flex items-center gap-2">
-                          <Icon name="Building" size={16} />
+                          <Icon name="Building" size={14} />
                           {project.client}
                         </CardDescription>
                       </div>
-                      <Badge variant="outline" className={getStatusColor(project.status)}>
-                        {getStatusLabel(project.status)}
-                      </Badge>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Icon name="Edit" size={14} />
+                        Редактировать
+                      </Button>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Бюджет</p>
-                        <p className="text-xl font-bold font-mono">{project.budget.toLocaleString()} ₽</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Исполнители</p>
-                        <p className="text-xl font-bold font-mono text-blue-500">{costs.contractorsCost.toLocaleString()} ₽</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Расходы</p>
-                        <p className="text-xl font-bold font-mono text-orange-500">{costs.expensesCost.toLocaleString()} ₽</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Общие затраты</p>
-                        <p className="text-xl font-bold font-mono text-red-500">{costs.totalCost.toLocaleString()} ₽</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Прибыль</p>
-                        <p className={`text-xl font-bold font-mono ${costs.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {costs.profit >= 0 ? '+' : ''}{costs.profit.toLocaleString()} ₽
-                          <span className="text-sm ml-2">({costs.profitMargin}%)</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Icon name="Users" size={18} className="text-primary" />
-                        <h4 className="font-semibold">Исполнители проекта</h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {project.assignments.map(assignment => {
-                          const contractor = getContractorById(assignment.contractorId);
-                          if (!contractor) return null;
-                          const earned = contractor.rate * assignment.hours;
-                          return (
-                            <div key={assignment.contractorId} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                              <div>
-                                <p className="font-medium">{contractor.name}</p>
-                                <p className="text-sm text-muted-foreground">{contractor.role}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-bold font-mono">{earned.toLocaleString()} ₽</p>
-                                <p className="text-xs text-muted-foreground">{assignment.hours}ч × {contractor.rate}₽</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {project.expenses.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Icon name="Receipt" size={18} className="text-orange-500" />
-                          <h4 className="font-semibold">Прочие расходы</h4>
-                        </div>
-                        <div className="space-y-2">
-                          {project.expenses.map(expense => (
-                            <div key={expense.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                              <div className="flex-1">
-                                <p className="font-medium">{expense.description}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge variant="outline" className="text-xs">{expense.category}</Badge>
-                                  <span className="text-xs text-muted-foreground">{new Date(expense.date).toLocaleDateString('ru-RU')}</span>
-                                </div>
-                              </div>
-                              <p className="font-bold font-mono">{expense.amount.toLocaleString()} ₽</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 pt-4 border-t border-border">
-                      <Button variant="outline" className="gap-2">
-                        <Icon name="UserPlus" size={16} />
-                        Добавить исполнителя
-                      </Button>
-                      <Button variant="outline" className="gap-2">
-                        <Icon name="Plus" size={16} />
-                        Добавить расход
-                      </Button>
-                      <Button variant="outline" className="gap-2 ml-auto">
-                        <Icon name="FileText" size={16} />
-                        Отчет
-                      </Button>
-                    </div>
-                  </CardContent>
                 </Card>
               );
             })}
@@ -410,7 +320,7 @@ const Index = () => {
                 const projectCount = projects.filter(p => p.assignments.some(a => a.contractorId === contractor.id)).length;
 
                 return (
-                  <Card key={contractor.id} className="animate-fade-in hover-scale" style={{ animationDelay: `${idx * 0.1}s` }}>
+                  <Card key={contractor.id} className="animate-fade-in" style={{ animationDelay: `${idx * 0.1}s` }}>
                     <CardHeader>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
@@ -447,6 +357,227 @@ const Index = () => {
                   </Card>
                 );
               })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="finances" className="space-y-4 mt-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Финансы</h2>
+              <div className="flex gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2">
+                      <Icon name="TrendingUp" size={16} />
+                      Добавить доход
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Новый доход</DialogTitle>
+                      <DialogDescription>Добавьте поступление средств</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="income-desc">Описание</Label>
+                        <Input id="income-desc" placeholder="Оплата от клиента" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="income-amount">Сумма (₽)</Label>
+                        <Input id="income-amount" type="number" placeholder="100000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="income-date">Дата</Label>
+                        <Input id="income-date" type="date" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="income-project">Проект</Label>
+                        <Select>
+                          <SelectTrigger id="income-project">
+                            <SelectValue placeholder="Выберите проект" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projects.map(project => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button className="w-full" onClick={() => toast.success('Доход добавлен')}>
+                        Добавить доход
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <Icon name="TrendingDown" size={16} />
+                      Добавить расход
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Новый расход</DialogTitle>
+                      <DialogDescription>Добавьте затраты</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="expense-desc">Описание</Label>
+                        <Input id="expense-desc" placeholder="Хостинг на год" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="expense-amount">Сумма (₽)</Label>
+                        <Input id="expense-amount" type="number" placeholder="15000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="expense-category">Категория</Label>
+                        <Select>
+                          <SelectTrigger id="expense-category">
+                            <SelectValue placeholder="Выберите категорию" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="infrastructure">Инфраструктура</SelectItem>
+                            <SelectItem value="software">ПО</SelectItem>
+                            <SelectItem value="design">Дизайн</SelectItem>
+                            <SelectItem value="marketing">Маркетинг</SelectItem>
+                            <SelectItem value="other">Прочее</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="expense-date">Дата</Label>
+                        <Input id="expense-date" type="date" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="expense-project">Проект (опционально)</Label>
+                        <Select>
+                          <SelectTrigger id="expense-project">
+                            <SelectValue placeholder="Выберите проект" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projects.map(project => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button className="w-full" onClick={() => toast.success('Расход добавлен')}>
+                        Добавить расход
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Общий доход</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="ArrowUpCircle" size={20} className="text-green-500" />
+                    <span className="text-3xl font-bold font-mono text-green-500">{(stats.totalBudget / 1000).toFixed(0)}k ₽</span>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Общий расход</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="ArrowDownCircle" size={20} className="text-red-500" />
+                    <span className="text-3xl font-bold font-mono text-red-500">{(stats.totalCosts / 1000).toFixed(0)}k ₽</span>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Баланс</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Icon name="Wallet" size={20} className="text-blue-500" />
+                    <span className="text-3xl font-bold font-mono text-blue-500">{(stats.totalProfit / 1000).toFixed(0)}k ₽</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="TrendingUp" size={20} className="text-green-500" />
+                    Доходы
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {projects.map(project => (
+                      <div key={project.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium">{project.name}</p>
+                          <p className="text-sm text-muted-foreground">{project.client}</p>
+                        </div>
+                        <p className="font-bold font-mono text-green-500">+{project.budget.toLocaleString()} ₽</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="TrendingDown" size={20} className="text-red-500" />
+                    Расходы
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {projects.flatMap(project => 
+                      project.expenses.map(expense => ({
+                        ...expense,
+                        projectName: project.name
+                      }))
+                    ).map(expense => (
+                      <div key={expense.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium">{expense.description}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">{expense.category}</Badge>
+                            <span className="text-xs text-muted-foreground">{expense.projectName}</span>
+                          </div>
+                        </div>
+                        <p className="font-bold font-mono text-red-500">-{expense.amount.toLocaleString()} ₽</p>
+                      </div>
+                    ))}
+                    {contractors.map(contractor => {
+                      const totalEarned = projects.reduce((sum, project) => {
+                        const assignment = project.assignments.find(a => a.contractorId === contractor.id);
+                        return sum + (assignment ? contractor.rate * assignment.hours : 0);
+                      }, 0);
+                      if (totalEarned === 0) return null;
+                      return (
+                        <div key={contractor.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-medium">{contractor.name}</p>
+                            <p className="text-sm text-muted-foreground">{contractor.role}</p>
+                          </div>
+                          <p className="font-bold font-mono text-red-500">-{totalEarned.toLocaleString()} ₽</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
